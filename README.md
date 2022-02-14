@@ -1,58 +1,43 @@
 # Comparing Capsule To Other Containers
 
-When I started this autowiring dependency injection (AWDI) container comparison,
-I presumed that aside from ancillary and additional features, the differences
-between the systems would not be in the core of *what they do*. I expected the
-differences would be in *how they do it*.
+Japanese | [English](https://github.com/ray-di/comparison/blob/ray.di/README.md)
 
-As it turns out, I was wrong. What I considered to be fundamental capabilities
-were just not available in some AWDI systems -- at least, not without some
-indirection, extra effort, or workarounds.
+AWDI（Autowiring Dependency Injection）コンテナの比較を始めたとき、補助的な追加機能は別として、システム間の違いはその中核部分にはないだろうと推測していました。その違いは、それをどのように行うかにあるのだろうと予想していました。
 
-## The Scenario
+結果的に、私は間違っていたのです。私が基本的な機能だと考えていたものは、AWDIのシステムによっては、少なくとも、何らかの指示や余分な努力、回避策がなければ使えないものでした。
 
-The scenario of fundamental features I imagined, thinking it would be easy to
-work through in every AWDI system, was this:
+## シナリオ
 
-- Define an instance of a [_Foo_](./setup.php) class, to be retrieved later via
-  container.
+私が想像していた基本機能のシナリオは、簡単にできるものだと思っていた。
+すべてのAWDIシステムで、このような作業が行われました。
 
-- Override a single constructor argument to replace one of originally configured
-  values for _Foo_ with a different value. (This simulates the loading of
-  multiple config files.)
+- [_Foo_](./setup.php) クラスのインスタンスを定義し、後からコンテナから取得します。
+  
+- コンストラクタの引数をひとつだけオーバーライドして、Foo にもともと設定されている値のひとつを別の値に置き換えます。(これは複数の設定ファイルの読み込みをシミュレートしています)。
+  
+- *Foo*の従属オブジェクトにある1つ以上の値を、環境などから遅延解決します。(これは遅延解決の機能を示しています)。
 
-- Lazy-resolve one or more values in a dependent object for _Foo_, e.g. from the
-  environment. (This shows off lazy resolution features.)
+しかし、簡単だと思ったことが、いくつかのAWDIコンテナでは難しかったり、不可能だったりすることが判明しました。
 
-But what I thought would be easy turned out to be difficult or impossible in
-some AWDI containers.
-
-Below you will find code for the scenario using Auryn, League Container,
-Illuminate Container, PHP-DI, Symfony Dependency Injection and Ray.Di. Each container
-example uses the same[setup](./setup.php) with an `output()` function for
-inspecting the results.
+以下では、Auryn, League Container, Illuminate Container, PHP-DI, Symfony Dependency Injection, Ray.Diを使ったシナリオのコードをご覧いただけます。各コンテナの例では、同じ[setup](./setup.php)と結果を確認するための `output()` 関数を使用しています。
 
 ### Capsule
 
-Since Capsule is the focal point for these comparisons, it makes sense to start
-with it. You can find the Capsule code at <https://github.com/capsulephp/di>.
-The example code for the scenario is [here](./capsule.php).
+カプセルはこの比較の中心的存在であるため、ここから始めるのが理にかなっています。
+を使用します。Capsuleのコードは<https://github.com/capsulephp/di>にあります。
+シナリオのサンプルコードは[こちら](./capsule.php)です。
 
-Capsule **does** complete the scenario:
+Capsuleは、シナリオを完成させるためのものです。
 
-1. Each definition is a dynamic property on the container, addressed using the
-`{}` notation.
+1. 各定義はコンテナの動的プロパティで、`{}`記法を用いて記述されます。
 
-2. The _PDO_ arguments are lazy-resolved from the environment using the `env()`
-method on the class definition.
+2. PDOの引数は、クラス定義の `env()` メソッドを使って環境から遅延して解決されます。
 
-3. The explicit _Foo_ arguments are literal; the $bar argument is purposely set
-to "wrong" so that we can see later if it is overridden properly.
+3. 明示的な _Foo_ 引数はリテラルです。$bar 引数は、正しくオーバーライドされているかどうかを後で確認するために、わざと「間違った」値に設定されています。
 
-4. The _Foo_ $bar argument is re-defined, to simulate a new configuration being
-loaded with override values.
+4. 引数 _Foo_ $bar は、オーバーライド値でロードされる新しい構成をシミュレートするために再定義されています。
 
-The `output()` is correct:
+`output()`は正しいです。
 
 ```
 PDO
@@ -62,26 +47,18 @@ baz-right
 
 ### Auryn
 
-You can find the Auryn code at <https://github.com/rdlowrey/auryn>. The example
-code for the scenario is [here](./auryn.php).
+Aurynのコードは<https://github.com/rdlowrey/auryn>に掲載されています。サンプル
+シナリオのコードは[こちら](./auryn.php)です。
 
-Auryn **does not** complete the scenario:
+Aurynは**シナリオを完成させません**。
 
-1. There appears to be no lazy-loading facility to read environment variables,
-or anything else. Thus, the _PDO_ arguments cannot be specified directly on the
-container. Instead, the injector requires a delegate factory closure, which
-does mean the _PDO_ arguments get lazy-loaded in a second-hand sort of way.
+1. 環境変数を読み込むためのレイジーローディング機能がないようです。 従って、_PDO_の引数を直接指定することはできません。 コンテナ 代わりに、インジェクタはデリゲートファクトリクロージャを必要とします。 これは、_PDO_の引数が二次的にレイジーローディングされることを意味します。
 
-2. The explicit _Foo_ argument names have to be prefixed with a `:` to indicate
-they are literals; the $bar argument is purposely set to "wrong" so that we
-can see later if it is overridden properly.
+2. 明示的な _Foo_ の引数名には、それを示す `:` を前置する必要があります。引数 $bar はわざと "wrong" に設定されています。正しくオーバーライドされているかどうか、後で確認することができます。
 
-3. As there appears to be no way to address an individual argument, `define()`
-is called again to redefine the $bar argument. Unforturnately, `define()`
-overwrites the entire _Foo_ definition, not just the one argument.
+3.個々の引数に対応する方法はないようなので、`define()`は が再び呼び出され、引数 $bar が再定義されます。不幸なことに、`define()` は引数のひとつだけでなく、_Foo_ の定義全体を上書きします。
 
-As a result, the `output()` fails, showing the default $baz value instead of the
-explicitly configured one:
+その結果、`output()` は失敗し、$baz のデフォルト値が表示されます。
 
 ```
 PDO
@@ -91,33 +68,21 @@ baz-wrong
 
 ### Illuminate Container
 
-You can find the Illuminate Container code (a Laravel component) at
-<https://github.com/illuminate/container>. The example code for the scenario
-is [here](./illuminate.php).
+Illuminate Containerのコード（Laravelコンポーネント）は、<https://github.com/illuminate/container>に掲載されています。シナリオのサンプルコードは[こちら](./illuminate.php)です。
 
-Illuminate Container **does** complete the scenario, but only with some extra
-effort:
+Illuminate Containerは、シナリオを完成させますが、余分な労力を必要とします。
 
-1. The _PDO_ arguments have to be specified individually, using a `$` prefix on
-the parameter names, via then `when()->needs()` idiom.
+1. _PDO_の引数は、`when()->needs()`イディオムを介して、パラメータ名のプレフィックスに `$` を付けて個別に指定する必要があります。
 
-2. The _PDO_ arguments have to be drawn from a configuration source via
-`giveConfig()`, not from the environment per se. (See point 5 below.)
+2. _PDO_ の引数は、環境そのものからではなく、 `giveConfig()` を介して設定ソースから取得しなければなりません。(以下のポイント5を参照)
 
-3. The explicit _Foo_ arguments likewise have to be specified individually; the
-$bar argument is purposely set to "wrong" so that we can see later if it is
-overridden properly.
+3. 明示的な _Foo_ 引数も同様に、個別に指定する必要があります。$bar 引数は、後で正しくオーバーライドされるかどうかを確認するために、あえて "wrong" に設定されています。
 
-4. The _Foo_ $bar argument is re-defined, to simulate a new configuration being
-loaded with override values.
+4. _Foo_ $bar 引数は再定義され、オーバーライド値でロードされる新しい構成をシミュレートします。
 
-5. The `giveConfig()` method expects a container entry object called `'config'`
-to be present, with a `get()` method on it. To honor this, a config container
-factory closure is created and bound to the main container; the necessary
-config values are retrieved from the environment. Thus, the environment values
-are lazy-loaded, but indirectly and in a second-hand sort of way.
+5. `giveConfig()` メソッドは、 'config'` というコンテナエントリオブジェクトと `get()` メソッドが存在することを想定しています。これを実現するために、config コンテナファクトリークロージャーが作成され、メインコンテナにバインドされます；必要な config 値は環境から取得されます。このように、環境の値はレイジーローディングされますが、間接的に、そしてセカンドハンドのような形でロードされます。
 
-The `output()` is correct:
+`output()`は正しいです。
 
 ```
 PDO
@@ -127,50 +92,32 @@ baz-right
 
 ### League Container
 
-You can find the League Container code at
-<https://github.com/thephpleague/container>. The example code for the scenario
-is [here](./league.php).
+リーグコンテナのコードは https://github.com/thephpleague/container にあります。シナリオのサンプルコードはこちらです。
 
-The League Container **does not** complete the scenario, even with extra effort:
+League Container は、余分な努力をしても、シナリオを完成させることはできません。
 
-1. The container itself will not autowire unless you set up a _ReflectionContainer_
-as a fallback delegate.
+ReflectionContainerをフォールバックのデリゲートとして設定しない限り、コンテナ自体が自動配線されることはありません。
 
-2. The _PDO_ arguments are specified as lazy-resolvable, though that resolution
-must be via the container, not directly from the environment. (See point 6
-below.)
+PDO の引数は遅延解決可能として指定されていますが、その解決は環境から直接ではなくコンテナを経由して行わなければなりません。(以下のポイント 6 を参照ください)。
 
-3. The _Foo_ $pdo argument is specified as lazy-resolvable, but this isn't
-necessary in any of the other containers presented here; this seems at odds
-with the advertised autowiring capability.
+Foo $pdo 引数は遅延解決可能 (lazy-resolvable) として指定されていますが、 ここで紹介する他のどのコンテナでもこの指定は必要ありません。
 
-4. The _Foo_ $bar argument is specified as lazy-resolvable, because there is no
-way to override an individual constructor argument. As a workaround, the value
-is lazy-resolved out of the container, in hopes that it can be defined and then
-re-defined later.
+Foo $bar 引数は遅延解決可能として指定されています。これは、個々のコンストラクタ引数をオーバーライドする方法がないためです。回避策として、値を定義して後で再定義できるように、コンテナの外側で遅延解決されます。
 
-5. The _Foo_ $baz argument is specified as a literal string object, to tell the
-container not to try to resolve it any further.
+Foo $baz 引数をリテラル文字列オブジェクトとして指定し、コンテナに対してそれ以上解決しようとしないように指示します。
 
-6. The container then gets set with values: the initial value for _Foo_ $bar,
-and the _PDO_ arguments lazy-loaded as closures using `getenv()`.
+Foo $bar の初期値、そして getenv() でクロージャとして遅延ロードされた PDO 引数です。
 
-7. The container then gets re-set with a new value for _Foo_ $bar, to simulate
-the loading of multiple configs, some with overrides.
+コンテナには Foo $bar の新しい値が設定され、 オーバーライドされた複数の設定が読み込まれることをシミュレートします。
 
-Unfortunately, because of the way the League container works internally, the
-later setting in point 7 cannot override the earlier one in point 4, so the
-`output()` fails:
-
+残念ながら、リーグコンテナの内部動作の関係で、 ポイント 7 で設定した内容はポイント 4 で設定した内容をオーバーライドできないため、 output() は失敗します。
 ```
 PDO
 bar-wrong
 baz-right
 ```
 
-Specifically, it's because the `DefinitionAggregate::getDefinition()` loop stops
-after finding the first matching key; the override value comes later, so it is
-never encountered:
+具体的には、DefinitionAggregate::getDefinition()ループは、最初にマッチするキーを見つけた後に停止するからです。
 
 ```php
 public function getDefinition(string $id): DefinitionInterface
@@ -187,28 +134,23 @@ public function getDefinition(string $id): DefinitionInterface
 
 ### PHP-DI
 
-You can find the PHP-DI code at <https://github.com/PHP-DI/PHP-DI>. The example
-code for the scenario is [here](./php-di.php).
+PHP-DIのコードは https://github.com/PHP-DI/PHP-DI で見ることができます。このシナリオのサンプルコードはこちらです。
 
-PHP-DI **does** complete the scenario, but with a little extra effort.
+PHP-DI はシナリオを完成させますが、少し手間がかかります。
 
-1. The container itself needs to be told to use autowiring, and not to use annotations.
+コンテナ自体に、自動配線とアノテーションを使用しないように指示する必要があります。
 
-2. The _PDO_ arguments are lazy-loaded directly from the environment.
+PDO の引数は、環境から直接遅延ロードされます。
 
-3. The _Foo_ $bar argument is specified as lazy-resolvable, because there is no
-way to override an individual constructor argument. As a workaround, the value
-is lazy-resolved out of the container, in hopes that it can be defined and then
-re-defined later.
+Foo $bar 引数は遅延解決可能 (lazy-resolvable) として指定されています。これは、コンストラクタの個々の引数をオーバーライドする方法がないためです。回避策として、この値はコンテナの外で遅延解決され、後で再定義できるようになります。
 
-4. The _Foo_ $baz argument is specified as a literal string.
+Foo $baz 引数はリテラル文字列として指定されます。
 
-5. A `Foo:bar` entry is added with the initial _Foo_ $bar value.
+Foo:barエントリが、Foo $barの初期値とともに追加されます。
 
-6. The container then gets re-set with a new value for _Foo_ $bar, to simulate
-the loading of multiple configs, some with overrides.
+コンテナは、Foo $bar の新しい値で再セットされます。これは、オーバーライドを含む複数の設定のロードをシミュレートするためです。
 
-The `output()` is correct:
+`output()`は正しいです。
 
 ```
 PDO
@@ -218,66 +160,47 @@ baz-right
 
 ### Symfony Dependency Injection
 
-(Thanks to [ahundiak](https://github.com/ahundiak) for
-[providing the code](https://github.com/capsulephp/comparison/issues/1)
-in this example.)
+symfony の Dependency Injection のコードは https://github.com/symfony/dependency-injection で見ることができます。シナリオのサンプルコードはこちらです。
 
-You can find the Symfony Dependency Injection code at
-<https://github.com/symfony/dependency-injection>. The example code for the
-scenario is [here](./symfony.php).
+symfony はシナリオを完成させません。symfony のコンテナを使う前にコンパイルする必要があります; 順番に、コンテナがコンパイルされる前に環境変数が配置されている必要があります。環境変数が利用可能になる前にコンテナをコンパイルすると、EnvNotFoundExceptions が発生します。
 
-Symfony **does not** complete the scenario. The Symfony container must
-be compiled before it can be used; in turn, the environment variables must be in
-place before the container is compiled. Compiling the container before the
-environment variables are available results in `EnvNotFoundException`s.
+symfony のコードを実行する唯一の方法は、コンテナをコンパイルして使用する前に環境変数を定義することですが、これは検討中の他のどのシステムでも要求されていないことです。
 
-The only way the Symfony code can run at all is to define the environment
-variables **before** compiling and using the container, something that is not
-required by any of the other systems under consideration.
+PDO の引数は '%env(DB_DSN)%' のような特別な文字列表記で環境変数として指定されます。
 
-1. The _PDO_ arguments are specified as environment variables via a special
-string notation, e.g. `'%env(DB_DSN)%'`.
+Foo クラスは autowired とマークされ、さらにどこからでも取得できるパブリックサービスとしてマークされます。
 
-2. The _Foo_ class is marked as autowired, and further marked as a public
-service that can be retrieved from anywhere.
+Foo の明示的な引数も同様に個別に指定する必要があります。$bar 引数は、正しくオーバーライドされているかどうかを後で確認するために、わざと「誤り」に設定されています。
 
-3. The explicit _Foo_ arguments likewise have to be specified individually; the
-$bar argument is purposely set to "wrong" so that we can see later if it is
-overridden properly.
+Foo $bar 引数は再定義され、オーバーライド値でロードされる新しい構成をシミュレートします。
 
-4. The _Foo_ $bar argument is re-defined, to simulate a new configuration being
-loaded with override values.
+EnvNotFoundExceptions を回避するため、コンテナをコンパイルする前に環境変数を定義しています。
 
-5. In order to avoid `EnvNotFoundException`s, the environment variables are
-defined before compiling the container.
+コンテナは、使用前にコンパイルされます。
 
-6. The container is compiled before use.
+変更されたシナリオの出力は正しいです。
 
-The output in the modified scenario is correct ...
-
+...
 ```
 PDO
 bar-right
 baz-right
 ```
 
-... because the environment has to be loaded before the container is compiled
-and used, I don't think this counts as "lazy loading" of the environment
-variables. As a result, I have to count this as "does not complete the
-scenario".
+...コンテナをコンパイルして使用する前に環境をロードする必要があるため、これは環境変数の「遅延ロード」にカウントされないと思うのですが。結果的に、これは「シナリオを完成させていない」と判断せざるを得ません。
 
 ### Ray.Di
 
-You can find the Ray.Di code at <https://github.com/ray-di/Ray.Di>. The example
-code for the scenario is [here](./ray-di.php).
+Ray.Diのコードは<https://github.com/ray-di/Ray.Di>に掲載されています。サンプル
+シナリオのコードは[こちら](./ray-di.php)です。
 
-Ray.Di **does** complete the scenario.
+Ray.Diはシナリオを完成させるためのものです。
 
-1. The PDO arguments are bound to a [Provider](https://github.com/ray-di/Ray.Di#provider-bindings) class that provides the values for them in runtime. 
-2. The Foo $bar argument is purposely set to "wrong" with [instance bidning](https://github.com/ray-di/Ray.Di#instance-bindings) so that we can see later if it is overridden properly.
-3. The _Foo_ $bar argument is re-defined, to simulate a new configuration being loaded with override values.
+1. PDO の引数は、実行時にその値を提供する [Provider](https://github.com/ray-di/Ray.Di#provider-bindings) クラスに束縛されています。
+2. $bar 引数は、正しくオーバーライドされているかどうかを後で確認するために、 [インスタンスバインディング](https://github.com/ray-di/Ray.Di#instance-bindings) でわざと「間違った」値に設定されています。
+3. _Foo_ $bar 引数は、オーバーライド値でロードされる新しい設定をシミュレートするために、再定義されます。
 
-The `output()` is correct:
+`output()`は正しいです。
 
 ```
 PDO
@@ -297,14 +220,9 @@ Thus, the final tally of which container systems completed the scenario:
 - Symfony: no
 - Ray.Di: yes
 
-Does this mean the containers that could not complete the scenario are
-somehow "bad" or "wrong"? No -- but it does mean I was wrong to think that the
-features highlighted by the scenario are commonplace. Different scenarios might
-show off these containers in a better or worse light.
+これは、シナリオを完成させられなかったコンテナが「悪い」「間違っている」ということでしょうか？いいえ。しかし、このシナリオで強調された機能が当たり前のものだと考えたのは間違いだったということです。別のシナリオでは、これらのコンテナをより良く、あるいはより悪く見せることができるかもしれません。
 
-Regardless, this exercise does show some of the differences between the example
-container systems using a practical example, which was the only point of doing
-the comparison in the first place.
+いずれにせよ、この演習では、実際の例を使って、例のコンテナシステムの違いをいくつか示しました。
 
 ## Appendix: Running The Scenario
 
