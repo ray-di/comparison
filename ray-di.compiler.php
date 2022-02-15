@@ -67,5 +67,5 @@ if ((count(glob($tmpDir))) !== 0 ) {
 }
 $injector = new ScriptInjector($tmpDir);
 
-echo "Ray.Di" . PHP_EOL;
+echo "Ray.Di (compiler)" . PHP_EOL;
 output($injector, 'getInstance');
